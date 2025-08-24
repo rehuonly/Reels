@@ -22,6 +22,9 @@
       --glow: 0 0 20px rgba(212,175,55,0.45), 0 0 40px rgba(212,175,55,0.25);
       --shadow-lg: 0 20px 60px rgba(0,0,0,0.35);
       --radius: 16px;
+      --ok: #86efac;
+      --err: #fca5a5;
+      --info: #93c5fd;
     }
 
     html, body { height: 100%; }
@@ -33,17 +36,20 @@
       overflow-x: hidden;
     }
 
+    /* Sparkler cursor canvas */
+    #sparklerCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+
     /* Gold shimmer overlay */
     .gold-noise {
       pointer-events: none;
-      position: fixed; inset: 0; opacity: 0.06; mix-blend-mode: screen;
+      position: fixed; inset: 0; opacity: 0.06; mix-blend-mode: screen; z-index: 1;
       background-image: url('https://images.unsplash.com/photo-1529257414772-1960bcbf2c6a?q=80&w=1200&auto=format&fit=crop');
       background-size: cover; filter: contrast(140%) saturate(120%);
     }
 
     /* Floating particles */
     .stars {
-      position: fixed; inset: 0; pointer-events: none; opacity: 0.5;
+      position: fixed; inset: 0; pointer-events: none; opacity: 0.5; z-index: 0;
       background: radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.7), transparent 60%),
                   radial-gradient(2px 2px at 60% 70%, rgba(255,255,255,0.7), transparent 60%),
                   radial-gradient(2px 2px at 80% 20%, rgba(255,255,255,0.7), transparent 60%),
@@ -56,6 +62,14 @@
       50% { opacity: 0.7 }
     }
 
+    /* Toasts */
+    .toasts { position: fixed; top: 14px; right: 14px; z-index: 90; display: grid; gap: 8px; }
+    .toast { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); background: rgba(12,10,22,0.9); box-shadow: var(--shadow-lg); animation: toastIn .25s ease; }
+    .toast.ok { border-color: rgba(134,239,172,0.4); }
+    .toast.info { border-color: rgba(147,197,253,0.4); }
+    .toast.err { border-color: rgba(252,165,165,0.4); }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(-6px) } to { opacity: 1; transform: translateY(0) } }
+
     /* Navigation + Controls */
     .topbar {
       position: sticky; top: 0; z-index: 50; backdrop-filter: blur(14px);
@@ -67,7 +81,7 @@
       font-family: 'Great Vibes', cursive; font-size: 28px; color: var(--gold);
       text-shadow: var(--glow);
     }
-    .controls { display: flex; gap: 10px; flex-wrap: wrap; }
+    .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .btn {
       appearance: none; border: 1px solid rgba(255,255,255,0.15); color: var(--white);
       background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
@@ -76,6 +90,9 @@
     }
     .btn:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.35); box-shadow: 0 10px 24px rgba(0,0,0,0.35); }
     .btn.gold { border-color: rgba(212,175,55,0.6); color: var(--gold); box-shadow: var(--glow); }
+
+    .vol { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+    .vol input[type=range] { width: 120px; accent-color: var(--gold); }
 
     /* Sections */
     section { position: relative; padding: 90px 20px; }
@@ -111,12 +128,22 @@
 
     /* Cake */
     .cake { display: grid; place-items: center; padding: 30px 10px; }
-    .cake-body { position: relative; width: 320px; height: 180px; background: linear-gradient(180deg,#fff1c9,#f7d990); border-radius: 12px; box-shadow: inset 0 -10px 0 #e7c174, 0 20px 60px rgba(0,0,0,0.35); border: 1px solid rgba(0,0,0,0.06); }
+    .cake-body { position: relative; width: 320px; height: 180px; background: linear-gradient(180deg,#fff1c9,#f7d990); border-radius: 12px; box-shadow: inset 0 -10px 0 #e7c174, 0 20px 60px rgba(0,0,0,0.35); border: 1px solid rgba(0,0,0,0.06); overflow: hidden; }
     .cake-cream { position: absolute; top: -28px; left: 20px; right: 20px; height: 46px; background: linear-gradient(180deg,#fff7e2,#f3dfb9); border-radius: 10px; box-shadow: inset 0 -8px 0 #e9c87e; }
     .candle { position: absolute; top: -80px; width: 14px; height: 80px; background: repeating-linear-gradient(180deg,#ff8ea8 0 10px,#ffd1da 10px 20px); border-radius: 6px; left: 50%; transform: translateX(-50%); box-shadow: 0 6px 12px rgba(0,0,0,0.2); }
     .flame { position: absolute; top: -24px; left: 50%; width: 14px; height: 24px; transform: translateX(-50%); background: radial-gradient(circle at 50% 30%, #fffacd, #ffb547 60%, rgba(0,0,0,0) 61%); border-radius: 50% 50% 50% 50%/ 60% 60% 40% 40%; animation: flicker 0.15s infinite; filter: drop-shadow(0 0 14px rgba(255,210,90,0.9)); }
     @keyframes flicker { 0%{ transform: translateX(-50%) scale(1)} 50%{ transform: translateX(calc(-50% + 1px)) scale(1.06)} 100%{ transform: translateX(-50%) scale(0.98)} }
     .wick { position: absolute; top: -8px; left: 50%; width: 2px; height: 10px; background: #333; transform: translateX(-50%); }
+
+    /* Cake slices */
+    .slice { position: absolute; top: 0; bottom: 0; width: 50%; background: linear-gradient(180deg,#fff1c9,#f7d990); }
+    .slice.left { left: 0; border-top-left-radius: 12px; border-bottom-left-radius: 12px; box-shadow: inset 0 -10px 0 #e7c174; }
+    .slice.right { right: 0; border-top-right-radius: 12px; border-bottom-right-radius: 12px; box-shadow: inset 0 -10px 0 #e7c174; }
+    .cake-body.cut .slice.left { transform: translate(-36px, 8px) rotate(-6deg); transition: transform .8s cubic-bezier(.2,.8,.2,1); }
+    .cake-body.cut .slice.right { transform: translate(36px, 8px) rotate(6deg); transition: transform .8s cubic-bezier(.2,.8,.2,1); }
+    .cake-body .knife { position: absolute; top: -60px; left: -120px; width: 220px; height: 16px; border-radius: 8px; background: linear-gradient(90deg, #aab7c4 0 70%, #3d2f2b 70% 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.3); transform: rotate(8deg); opacity: 0; }
+    .cake-body.cut .knife { animation: sliceAcross 1.2s ease forwards; }
+    @keyframes sliceAcross { 0% { opacity: 1; transform: translateX(0) rotate(8deg) } 100% { opacity: 0; transform: translateX(420px) rotate(8deg) } }
 
     /* Personal message */
     .message { font-family: 'Playfair Display', serif; font-size: clamp(18px, 2.2vw, 26px); color: var(--gold-soft); text-align: center; }
@@ -153,18 +180,18 @@
     @keyframes write { to { stroke-dashoffset: 0 } }
 
     /* Terminal */
-    .terminal { position: fixed; bottom: 12px; right: 12px; width: min(96vw, 680px); background: #0c0a16; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; box-shadow: var(--shadow-lg); display: none; flex-direction: column; z-index: 80; }
+    .terminal { position: fixed; bottom: 12px; right: 12px; width: min(96vw, 700px); background: #0c0a16; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; box-shadow: var(--shadow-lg); display: none; flex-direction: column; z-index: 80; }
     .terminal-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); }
     .leds { display: flex; gap: 8px; }
     .led { width: 10px; height: 10px; border-radius: 50%; }
     .led.red { background: #ff5e5e }
     .led.yellow { background: #f2c94c }
     .led.green { background: #6fcf97 }
-    .terminal-body { padding: 12px; max-height: 40vh; overflow: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 14px; }
+    .terminal-body { padding: 12px; max-height: 42vh; overflow: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 14px; }
     .terminal-line { color: #cbd5e1; margin: 4px 0; }
-    .terminal-line span.cmd { color: #93c5fd }
-    .terminal-line span.ok { color: #86efac }
-    .terminal-line span.err { color: #fca5a5 }
+    .terminal-line span.cmd { color: var(--info) }
+    .terminal-line span.ok { color: var(--ok) }
+    .terminal-line span.err { color: var(--err) }
     .terminal-input { display: flex; padding: 10px; gap: 10px; border-top: 1px solid rgba(255,255,255,0.06); }
     .terminal-input input { flex: 1; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); color: var(--white); }
 
@@ -182,46 +209,58 @@
       .gallery-grid { grid-template-columns: 1fr; }
       section { padding: 70px 16px; }
       .cake-body { width: 260px; }
+      .vol input[type=range] { width: 100px; }
     }
   </style>
 </head>
 <body>
-  <div class="stars"></div>
-  <div class="gold-noise"></div>
+  <canvas id="sparklerCanvas"></canvas>
+  <div class="stars" aria-hidden="true"></div>
+  <div class="gold-noise" aria-hidden="true"></div>
+  <div class="toasts" id="toasts" aria-live="polite" aria-atomic="true"></div>
 
-  <header class="topbar">
+  <header class="topbar" role="banner">
     <div class="container row">
-      <div class="brand">For Ayesha ✨</div>
-      <div class="controls">
-        <button class="btn gold" data-action="toggleMusic">Play / Pause Music</button>
-        <button class="btn" data-action="launchBalloons">Launch Balloons</button>
+      <div class="brand" aria-label="Made for Ayesha">For Ayesha ✨</div>
+      <div class="controls" role="toolbar" aria-label="Controls">
+        <button class="btn gold" data-action="toggleMusic" aria-label="Play or pause music">Play / Pause</button>
+        <div class="vol" aria-label="Volume control">
+          <span>🔊</span>
+          <input id="volRange" type="range" min="0" max="100" value="70" aria-valuemin="0" aria-valuemax="100" aria-label="Music volume" />
+          <button class="btn" data-action="mute" aria-label="Mute or unmute">Mute</button>
+        </div>
+        <button class="btn" data-action="launchBalloons">Balloons</button>
         <button class="btn" data-action="confetti">Confetti</button>
         <button class="btn" data-action="fireworks">Fireworks</button>
         <button class="btn" data-action="blowCandles">Blow Candles</button>
+        <button class="btn" data-action="cutCake">Cut Cake</button>
+        <button class="btn" data-action="resetCake">Reset Cake</button>
         <button class="btn" data-action="toggleTerminal">Terminal</button>
+        <button class="btn gold" data-action="storyStart">Play Story</button>
+        <button class="btn" data-action="storyStop">Stop</button>
       </div>
     </div>
   </header>
 
   <!-- 1. Intro -->
-  <section id="intro" class="frame">
+  <section id="intro" class="frame" aria-label="Intro">
     <div class="card reveal">
       <h1 class="intro-title">
         <div class="line1">Happy Birthday, Ayesha</div>
         <div class="typewriter" id="typewriter">Wishing you a year as radiant as your smile...</div>
       </h1>
       <div style="text-align:center; margin-top:20px;">
-        <button class="btn gold" data-action="scrollNext">Begin the Journey</button>
+        <button class="btn gold" data-action="scrollNext" aria-label="Begin the journey">Begin the Journey</button>
       </div>
     </div>
   </section>
 
   <!-- 2. Balloons -->
-  <section id="balloons" class="frame">
+  <section id="balloons" class="frame" aria-label="Balloons">
     <div class="card reveal">
       <h2 style="margin:0 0 12px; font-family:'Playfair Display',serif;">Floating Balloons</h2>
       <p style="margin:0 0 16px; color:var(--muted)">Tap to fill the sky with color.</p>
-      <div class="balloon-field" id="balloonField"></div>
+      <div class="balloon-field" id="balloonField" aria-hidden="false"></div>
       <div style="margin-top:14px; display:flex; gap:10px;">
         <button class="btn" data-action="launchBalloons">Launch</button>
         <button class="btn" data-action="clearBalloons">Clear</button>
@@ -230,7 +269,7 @@
   </section>
 
   <!-- 3. Confetti + Fireworks -->
-  <section id="celebrate" class="frame">
+  <section id="celebrate" class="frame" aria-label="Celebration">
     <div class="card reveal" style="overflow:hidden;">
       <h2 style="margin:0 0 12px; font-family:'Playfair Display',serif;">Confetti & Fireworks</h2>
       <p style="margin:0 16px 16px 0; color:var(--muted)">Make the night sparkle for Ayesha.</p>
@@ -247,34 +286,39 @@
   </section>
 
   <!-- 4. Cake -->
-  <section id="cake" class="frame">
+  <section id="cake" class="frame" aria-label="Cake">
     <div class="card reveal">
       <h2 style="margin:0 0 12px; font-family:'Playfair Display',serif;">A Cake for Ayesha</h2>
       <div class="cake">
-        <div class="cake-body">
+        <div class="cake-body" id="cakeBody">
           <div class="cake-cream"></div>
           <div class="candle">
             <div class="wick"></div>
             <div class="flame" id="flame"></div>
           </div>
+          <div class="slice left"></div>
+          <div class="slice right"></div>
+          <div class="knife" aria-hidden="true"></div>
         </div>
       </div>
-      <div style="text-align:center; display:flex; gap:10px; justify-content:center;">
+      <div style="text-align:center; display:flex; gap:10px; justify-content:center; flex-wrap: wrap;">
         <button class="btn" data-action="blowCandles">Blow Candles</button>
         <button class="btn" data-action="lightCandles">Light Candles</button>
+        <button class="btn gold" data-action="cutCake">Cut the Cake</button>
+        <button class="btn" data-action="resetCake">Reset Cake</button>
       </div>
     </div>
   </section>
 
   <!-- 5. Personal message -->
-  <section id="message" class="frame">
+  <section id="message" class="frame" aria-label="Message">
     <div class="card reveal">
       <div class="message" id="personalMessage"></div>
     </div>
   </section>
 
   <!-- 6. Gallery -->
-  <section id="gallery" class="frame">
+  <section id="gallery" class="frame" aria-label="Gallery">
     <div class="card reveal">
       <h2 style="margin:0 0 12px; font-family:'Playfair Display',serif;">Moments & Smiles</h2>
       <p style="margin:0 0 16px; color:var(--muted)">A curated gallery to celebrate you.</p>
@@ -284,7 +328,7 @@
         <img src="https://images.unsplash.com/photo-1520975922284-7b683db51a0d?q=80&w=1200&auto=format&fit=crop" alt="Ayesha 3" />
         <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop" alt="Ayesha 4" />
         <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=1200&auto=format&fit=crop" alt="Ayesha 5" />
-        <img src="https://media.giphy.com/media/l41lI4bYmcsPJX9Go/giphy.gif" alt="Ayesha GIF" />
+        <img src="https://media.giphy.com/media/l41lI4bYmcsPJX9Go/giphy.gif" alt="Celebration GIF" />
         <img src="https://images.unsplash.com/photo-1527562737955-0ca6371f84e2?q=80&w=1200&auto=format&fit=crop" alt="Ayesha 6" />
         <img src="https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?q=80&w=1200&auto=format&fit=crop" alt="Ayesha 7" />
         <img src="https://images.unsplash.com/photo-1511988617509-a57c8a288659?q=80&w=1200&auto=format&fit=crop" alt="Ayesha 8" />
@@ -292,10 +336,10 @@
     </div>
   </section>
 
-  <div class="lightbox" id="lightbox"><img alt="" /></div>
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true"><img alt="" /></div>
 
   <!-- 7. 3D Section -->
-  <section id="three" class="frame">
+  <section id="three" class="frame" aria-label="3D">
     <div class="card reveal">
       <h2 style="margin:0 0 12px; font-family:'Playfair Display',serif;">A 3D Wish in Gold</h2>
       <div id="three-wrap">
@@ -309,7 +353,7 @@
   </section>
 
   <!-- 8. Hearts & Sparkles -->
-  <section id="hearts" class="frame">
+  <section id="hearts" class="frame" aria-label="Hearts">
     <div class="card reveal">
       <h2 style="margin:0 0 12px; font-family:'Playfair Display',serif;">Glowing Hearts</h2>
       <div class="hearts" id="heartsField"></div>
@@ -321,7 +365,7 @@
   </section>
 
   <!-- 9. Surprise -->
-  <section id="surprise" class="frame">
+  <section id="surprise" class="frame" aria-label="Surprise">
     <div class="card reveal">
       <h2 style="margin:0 0 12px; font-family:'Playfair Display',serif;">A Gentle Surprise</h2>
       <p style="margin:0 0 16px; color:var(--muted)">A hidden note from the heart.</p>
@@ -331,10 +375,10 @@
     </div>
   </section>
 
-  <div class="surprise-overlay" id="surpriseOverlay">
+  <div class="surprise-overlay" id="surpriseOverlay" role="dialog" aria-modal="true" aria-label="Surprise message">
     <div class="surprise-card">
       <h3>Dear Ayesha</h3>
-      <p>May this year sparkle brighter than the last. Your kindness lights every room, your smile warms every soul, and your dreams deserve the grandest of stages. Here s to love, laughter, and countless golden moments. Happy Birthday!  With all my heart.  </p>
+      <p>May this year sparkle brighter than the last. Your kindness lights every room, your smile warms every soul, and your dreams deserve the grandest of stages. Here’s to love, laughter, and countless golden moments. Happy Birthday! — With all my heart.</p>
       <div style="margin-top: 16px;">
         <button class="btn" data-action="hideSurprise">Close</button>
       </div>
@@ -342,9 +386,9 @@
   </div>
 
   <!-- 10. Closing Signature -->
-  <section id="closing" class="frame">
+  <section id="closing" class="frame" aria-label="Closing">
     <div class="card reveal" style="text-align:center;">
-      <div class="signature">Made for Ayesha  </div>
+      <div class="signature">Made for Ayesha ❤️</div>
       <div class="signature-stroke" style="margin-top:16px;">
         <svg width="340" height="120" viewBox="0 0 340 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path d="M10,60 C60,10 80,110 130,60 C160,30 200,90 240,50 C260,35 290,70 330,40" />
@@ -359,15 +403,15 @@
   </audio>
 
   <!-- Terminal Panel -->
-  <div class="terminal" id="terminal">
+  <div class="terminal" id="terminal" role="dialog" aria-modal="false" aria-label="Ayesha Terminal">
     <div class="terminal-header">
       <div class="leds"><span class="led red"></span><span class="led yellow"></span><span class="led green"></span></div>
       <div style="opacity:0.85">Ayesha Terminal</div>
-      <button class="btn" data-action="toggleTerminal">Close</button>
+      <button class="btn" data-action="toggleTerminal" aria-label="Close terminal">Close</button>
     </div>
     <div class="terminal-body" id="terminalBody"></div>
     <div class="terminal-input">
-      <input type="text" id="terminalInput" placeholder="Type a command (help to list) and press Enter" />
+      <input type="text" id="terminalInput" placeholder="Type a command (help to list) and press Enter" aria-label="Terminal input" />
     </div>
   </div>
 
@@ -379,6 +423,15 @@
     const qs = (sel, el=document) => el.querySelector(sel);
     const qsa = (sel, el=document) => Array.from(el.querySelectorAll(sel));
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    // Toasts
+    const toasts = qs('#toasts');
+    function toast(msg, type='info', timeout=2200){
+      const el = document.createElement('div'); el.className = `toast ${type}`;
+      el.setAttribute('role','status'); el.innerHTML = msg;
+      toasts.appendChild(el); setTimeout(()=>{ el.style.opacity = '0'; el.style.transform = 'translateY(-6px)'; setTimeout(()=> el.remove(), 350); }, timeout);
+    }
 
     // Scroll reveal
     const io = new IntersectionObserver((entries)=>{
@@ -403,10 +456,7 @@
       const el = qs('#personalMessage');
       const text = `Ayesha, may your days be wrapped in love, your nights full of starlight, and your heart overflowing with joy. Today and always, you are cherished.`;
       let i = 0; el.textContent = '';
-      function step(){
-        el.textContent = text.slice(0, i++);
-        if (i <= text.length) setTimeout(step, 22);
-      }
+      function step(){ el.textContent = text.slice(0, i++); if (i <= text.length) setTimeout(step, 22); }
       setTimeout(step, 400);
     })();
 
@@ -414,6 +464,7 @@
     const Actions = {
       toggleTerminal,
       toggleMusic,
+      mute,
       launchBalloons,
       clearBalloons,
       confetti,
@@ -421,12 +472,16 @@
       clearFX,
       blowCandles,
       lightCandles,
+      cutCake,
+      resetCake,
       hearts,
       clearHearts,
       surprise: showSurprise,
       hideSurprise,
       spin3d,
       stop3d,
+      storyStart,
+      storyStop,
       scrollNext: ()=> scrollToId('balloons'),
       showGallery: ()=> scrollToId('gallery'),
       help: ()=>{}
@@ -448,12 +503,18 @@
 
     // Background music controls
     const audio = qs('#bgm');
+    const volRange = qs('#volRange');
     let userInteractedAudio = false;
+    audio.volume = 0.7; volRange.value = 70;
+
     function toggleMusic(){
       userInteractedAudio = true;
-      if (audio.paused) audio.play().catch(()=>{}); else audio.pause();
+      if (audio.paused) audio.play().then(()=> toast('Music playing ♫','ok')).catch(()=>{});
+      else { audio.pause(); toast('Music paused','info'); }
       logTerminal(`music: ${audio.paused ? 'paused' : 'playing'}`, 'ok');
     }
+    function mute(){ audio.muted = !audio.muted; toast(`Muted: ${audio.muted ? 'on' : 'off'}`, audio.muted ? 'err' : 'ok'); logTerminal(`music: muted=${audio.muted}`, 'ok'); }
+    volRange.addEventListener('input', ()=>{ const vol = clamp(parseInt(volRange.value)/100,0,1); audio.volume = vol; logTerminal(`music: volume ${(vol*100)|0}%`, 'ok'); });
 
     // Auto unlock audio on first gesture
     ['click','touchstart','keydown'].forEach(evt => document.addEventListener(evt, ()=>{
@@ -462,9 +523,9 @@
 
     // Balloons
     const balloonField = qs('#balloonField');
-    function launchBalloons(count = 20){
+    function launchBalloons(count = 24){
       const palette = ['#ff8ea8','#ffd166','#9bf6ff','#caffbf','#bdb2ff','#ffc6ff','#fdffb6','#a0c4ff'];
-      const w = balloonField.clientWidth; const h = balloonField.clientHeight;
+      const w = balloonField.clientWidth;
       for (let i=0;i<count;i++){
         const b = document.createElement('div'); b.className='balloon';
         const size = 28 + Math.random()*32; b.style.width = size+'px'; b.style.height = (size*1.2)+'px';
@@ -476,34 +537,31 @@
         setTimeout(()=>{ b.remove(); }, (dur+3)*1000);
       }
       logTerminal(`balloons: launched ${count}`, 'ok');
+      toast('Balloons launched 🎈','ok');
     }
     function clearBalloons(){ qsa('.balloon', balloonField).forEach(b=>b.remove()); logTerminal('balloons: cleared', 'ok'); }
 
-    // Confetti
+    // Confetti canvas
     const confettiCanvas = qs('#confettiCanvas');
     const confettiCtx = confettiCanvas.getContext('2d');
     const confettiParts = [];
-    function resizeCanvas(){
-      [confettiCanvas, fireworksCanvas].forEach(cv=>{ cv.width = cv.clientWidth * devicePixelRatio; cv.height = cv.clientHeight * devicePixelRatio; });
+    function setCanvasSize(canvas){
+      const r = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio||1, 2);
+      canvas.width = Math.max(1, Math.floor(r.width * dpr));
+      canvas.height = Math.max(1, Math.floor(r.height * dpr));
     }
-    window.addEventListener('resize', resizeCanvas); resizeCanvas();
+    const resizeObserver = new ResizeObserver(()=>{ setCanvasSize(confettiCanvas); setCanvasSize(fireworksCanvas); });
+    resizeObserver.observe(confettiCanvas);
+    resizeObserver.observe(qs('#fireworksCanvas'));
+    setCanvasSize(confettiCanvas);
 
     function confetti(burst=160){
       const colors = ['#ffd166','#06d6a0','#ef476f','#118ab2','#ffd6ff','#b5e48c'];
       for (let i=0;i<burst;i++){
-        confettiParts.push({
-          x: Math.random()*confettiCanvas.width,
-          y: -10,
-          w: 6 + Math.random()*10,
-          h: 6 + Math.random()*12,
-          a: Math.random()*Math.PI*2,
-          s: 1 + Math.random()*3.2,
-          vy: 2 + Math.random()*2.5,
-          color: colors[Math.floor(Math.random()*colors.length)],
-          life: 180 + Math.random()*160
-        });
+        confettiParts.push({ x: Math.random()*confettiCanvas.width, y: -10, w: 6 + Math.random()*10, h: 6 + Math.random()*12, a: Math.random()*Math.PI*2, s: 1 + Math.random()*3.2, vy: 2 + Math.random()*2.5, color: colors[Math.floor(Math.random()*colors.length)], life: 180 + Math.random()*160 });
       }
-      logTerminal(`confetti: burst ${burst}`, 'ok');
+      logTerminal(`confetti: burst ${burst}`, 'ok'); toast('Confetti burst 🎉','ok');
     }
 
     function drawConfetti(){
@@ -511,12 +569,7 @@
       for (let i=confettiParts.length-1; i>=0; i--){
         const p = confettiParts[i];
         p.y += p.vy; p.x += Math.sin(p.a)*p.s; p.a += 0.08; p.life -= 1;
-        confettiCtx.save();
-        confettiCtx.translate(p.x, p.y);
-        confettiCtx.rotate(p.a);
-        confettiCtx.fillStyle = p.color;
-        confettiCtx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
-        confettiCtx.restore();
+        confettiCtx.save(); confettiCtx.translate(p.x, p.y); confettiCtx.rotate(p.a); confettiCtx.fillStyle = p.color; confettiCtx.fillRect(-p.w/2, -p.h/2, p.w, p.h); confettiCtx.restore();
         if (p.y > confettiCanvas.height + 20 || p.life <= 0) confettiParts.splice(i,1);
       }
       requestAnimationFrame(drawConfetti);
@@ -529,6 +582,7 @@
     const fireworksCanvas = qs('#fireworksCanvas');
     const fctx = fireworksCanvas.getContext('2d');
     const fireworksBursts = [];
+    setCanvasSize(fireworksCanvas);
     function fireworks(count=4){
       for (let b=0;b<count;b++){
         const cx = Math.random()*fireworksCanvas.width*0.8 + fireworksCanvas.width*0.1;
@@ -543,13 +597,13 @@
         }
         fireworksBursts.push(parts);
       }
-      logTerminal(`fireworks: launched ${count}`, 'ok');
+      logTerminal(`fireworks: launched ${count}`, 'ok'); toast('Fireworks launched ✨','ok');
     }
 
     function drawFireworks(){
       fctx.fillStyle = 'rgba(0,0,0,0.15)';
       fctx.fillRect(0,0, fireworksCanvas.width, fireworksCanvas.height);
-      fireworksBursts.forEach((burst, bi)=>{
+      fireworksBursts.forEach((burst)=>{
         for (let i=burst.length-1; i>=0; i--){
           const p = burst[i];
           p.x += p.vx; p.y += p.vy; p.vy += 0.012; p.life -= 1.5;
@@ -564,9 +618,19 @@
     }
     requestAnimationFrame(drawFireworks);
 
-    // Cake candle controls
-    function blowCandles(){ const fl = qs('#flame'); if (fl) fl.style.display = 'none'; logTerminal('cake: candles blown  ', 'ok'); }
-    function lightCandles(){ const fl = qs('#flame'); if (fl) fl.style.display = 'block'; logTerminal('cake: candles lit', 'ok'); }
+    // Cake controls
+    const cakeBody = qs('#cakeBody');
+    function blowCandles(){ const fl = qs('#flame'); if (fl) fl.style.display = 'none'; logTerminal('cake: candles blown', 'ok'); toast('Candles blown 🕯️','info'); }
+    function lightCandles(){ const fl = qs('#flame'); if (fl) fl.style.display = 'block'; logTerminal('cake: candles lit', 'ok'); toast('Candles lit 🕯️','ok'); }
+    function cutCake(){
+      if (!cakeBody.classList.contains('cut')){
+        cakeBody.classList.add('cut');
+        confetti(240);
+        logTerminal('cake: cut complete','ok');
+        toast('Cake cut 🍰','ok');
+      }
+    }
+    function resetCake(){ cakeBody.classList.remove('cut'); lightCandles(); logTerminal('cake: reset','ok'); }
 
     // Gallery lightbox
     const lightbox = qs('#lightbox');
@@ -628,11 +692,7 @@
         camera.aspect = r.width / r.height; camera.updateProjectionMatrix();
       });
 
-      function animate(){
-        if (animating && mesh){ mesh.rotation.y += 0.01; mesh.rotation.x += 0.003; }
-        renderer.render(scene, camera);
-        requestAnimationFrame(animate);
-      }
+      function animate(){ if (animating && mesh){ mesh.rotation.y += 0.01; mesh.rotation.x += 0.003; } renderer.render(scene, camera); requestAnimationFrame(animate); }
       requestAnimationFrame(animate);
     })();
     function spin3d(){ animating = true; logTerminal('3d: spinning', 'ok'); }
@@ -642,11 +702,13 @@
     const terminal = qs('#terminal');
     const terminalBody = qs('#terminalBody');
     const terminalInput = qs('#terminalInput');
-    function toggleTerminal(){ terminal.style.display = (terminal.style.display==='flex') ? 'none' : 'flex'; terminal.style.display==='flex' && terminalInput.focus(); }
+    let history = []; let historyIndex = -1;
+
+    function toggleTerminal(){ terminal.style.display = (terminal.style.display==='flex') ? 'none' : 'flex'; if (terminal.style.display==='flex') terminalInput.focus(); }
 
     function logTerminal(text, cls){
       const line = document.createElement('div'); line.className='terminal-line';
-      const vv = text.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const vv = String(text).replace(/</g,'&lt;').replace(/>/g,'&gt;');
       line.innerHTML = `<span class="${cls||''}">${vv}</span>`; terminalBody.appendChild(line); terminalBody.scrollTop = terminalBody.scrollHeight;
     }
 
@@ -658,16 +720,20 @@
           'launch balloons | clear balloons',
           'confetti | fireworks | clear fx',
           'blow candles | light candles',
+          'cut cake | reset cake',
           'hearts | clear hearts',
           'surprise | hide surprise',
           'spin 3d | stop 3d',
-          'show gallery | scroll [intro|balloons|celebrate|cake|message|gallery|three|hearts|surprise|closing]'
+          'story start | story stop',
+          'show gallery | scroll [intro|balloons|celebrate|cake|message|gallery|three|hearts|surprise|closing]',
+          'clear (terminal)'
         ].forEach(s=> logTerminal('  ' + s));
       },
+      clear(){ terminalBody.innerHTML = ''; },
       'play music': toggleMusic,
       'pause music': toggleMusic,
-      'mute': ()=>{ audio.muted = !audio.muted; logTerminal(`music: muted=${audio.muted}`, 'ok'); },
-      'volume': (v)=>{ const vol = clamp(parseInt(v)/100, 0, 1); audio.volume = isNaN(vol) ? 1 : vol; logTerminal(`music: volume ${(audio.volume*100)|0}%`, 'ok'); },
+      'mute': mute,
+      'volume': (v)=>{ const vol = clamp(parseInt(v)/100, 0, 1); audio.volume = isNaN(vol) ? 1 : vol; volRange.value = Math.round(audio.volume*100); logTerminal(`music: volume ${(audio.volume*100)|0}%`, 'ok'); },
       'launch balloons': ()=> launchBalloons(30),
       'clear balloons': clearBalloons,
       'confetti': ()=> confetti(200),
@@ -675,33 +741,43 @@
       'clear fx': clearFX,
       'blow candles': blowCandles,
       'light candles': lightCandles,
+      'cut cake': cutCake,
+      'reset cake': resetCake,
       'hearts': ()=> hearts(48),
       'clear hearts': clearHearts,
       'surprise': showSurprise,
       'hide surprise': hideSurprise,
       'spin 3d': spin3d,
       'stop 3d': stop3d,
+      'story start': storyStart,
+      'story stop': storyStop,
       'show gallery': ()=> scrollToId('gallery'),
       'scroll': (id)=> scrollToId(id)
     };
 
+    const ALIASES = new Map([
+      ['play', 'play music'], ['pause', 'pause music'], ['music', 'play music'],
+      ['balloons', 'launch balloons'], ['fw', 'fireworks'], ['conf', 'confetti'],
+      ['cut', 'cut cake'], ['reset', 'reset cake'], ['story', 'story start']
+    ]);
+
     function parseAndRun(cmd){
-      const raw = cmd.trim().toLowerCase();
-      if (!raw) return;
-      logTerminal('> ' + raw, 'cmd');
-      if (COMMANDS[raw]) return COMMANDS[raw]();
-      // handle arg forms
-      if (raw.startsWith('volume')){
-        const v = raw.split(/\s+/)[1]; return COMMANDS['volume'](v);
-      }
-      if (raw.startsWith('scroll ')){
-        const id = raw.split(/\s+/)[1]; return COMMANDS['scroll'](id);
-      }
+      const rawInput = cmd.trim();
+      if (!rawInput) return;
+      history.push(rawInput); historyIndex = history.length;
+      const raw = rawInput.toLowerCase();
+      logTerminal('> ' + rawInput, 'cmd');
+      const alias = ALIASES.get(raw) || raw;
+      if (COMMANDS[alias]) return COMMANDS[alias]();
+      if (alias.startsWith('volume')){ const v = alias.split(/\s+/)[1]; return COMMANDS['volume'](v); }
+      if (alias.startsWith('scroll ')){ const id = alias.split(/\s+/)[1]; return COMMANDS['scroll'](id); }
       logTerminal('unknown command. type: help', 'err');
     }
 
     terminalInput.addEventListener('keydown', (e)=>{
       if (e.key === 'Enter') { parseAndRun(terminalInput.value); terminalInput.value=''; }
+      if (e.key === 'ArrowUp'){ historyIndex = Math.max(0, historyIndex-1); terminalInput.value = history[historyIndex] || ''; }
+      if (e.key === 'ArrowDown'){ historyIndex = Math.min(history.length, historyIndex+1); terminalInput.value = history[historyIndex] || ''; }
     });
 
     // Accessibility: keyboard shortcuts
@@ -710,12 +786,64 @@
       if (e.key.toLowerCase() === 'c' && (e.ctrlKey || e.metaKey)) confetti(160);
     });
 
+    // Story mode
+    let storyAbort = false;
+    async function storyStart(){
+      storyAbort = false; toast('Story started ▶','ok');
+      toggleMusic(); await sleep(1200); if (storyAbort) return;
+      scrollToId('balloons'); await sleep(900); if (storyAbort) return; launchBalloons(28);
+      await sleep(1600); if (storyAbort) return; scrollToId('celebrate');
+      await sleep(800); if (storyAbort) return; confetti(220);
+      await sleep(1300); if (storyAbort) return; fireworks(4);
+      await sleep(1600); if (storyAbort) return; scrollToId('cake');
+      await sleep(1200); if (storyAbort) return; lightCandles();
+      await sleep(1200); if (storyAbort) return; blowCandles();
+      await sleep(900); if (storyAbort) return; cutCake();
+      await sleep(1400); if (storyAbort) return; scrollToId('message');
+      await sleep(1800); if (storyAbort) return; scrollToId('gallery');
+      await sleep(1600); if (storyAbort) return; scrollToId('three'); spin3d();
+      await sleep(1600); if (storyAbort) return; scrollToId('hearts'); hearts(50);
+      await sleep(1600); if (storyAbort) return; scrollToId('surprise'); showSurprise();
+      await sleep(1800); if (storyAbort) return; scrollToId('closing');
+      toast('Story finished ✔','ok');
+    }
+    function storyStop(){ storyAbort = true; toast('Story stopped ⏹','info'); }
+
+    // Sparkler cursor trail
+    const sparkler = qs('#sparklerCanvas');
+    const sp = sparkler.getContext('2d');
+    function sizeSparkler(){ sparkler.width = innerWidth * Math.min(devicePixelRatio,2); sparkler.height = innerHeight * Math.min(devicePixelRatio,2); }
+    sizeSparkler(); window.addEventListener('resize', sizeSparkler);
+    const sparks = [];
+    function addSpark(x,y){
+      const dpr = Math.min(devicePixelRatio||1,2);
+      const count = 6 + Math.floor(Math.random()*6);
+      for (let i=0;i<count;i++){
+        const ang = Math.random()*Math.PI*2; const spd = 1 + Math.random()*2.5;
+        sparks.push({ x:x*dpr, y:y*dpr, vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd, life: 30 + Math.random()*20, hue: Math.random()*60 + 40 });
+      }
+    }
+    function drawSparks(){
+      sp.clearRect(0,0,sparkler.width, sparkler.height);
+      for (let i=sparks.length-1;i>=0;i--){
+        const p=sparks[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.02; p.life-=1;
+        sp.beginPath(); sp.arc(p.x,p.y, 2, 0, Math.PI*2);
+        sp.fillStyle = `hsla(${p.hue}, 100%, 70%, ${clamp(p.life/40,0,1)})`; sp.fill();
+        if (p.life<=0) sparks.splice(i,1);
+      }
+      requestAnimationFrame(drawSparks);
+    }
+    requestAnimationFrame(drawSparks);
+    ['mousemove','touchmove'].forEach(evt=> document.addEventListener(evt, (e)=>{
+      if (evt==='mousemove') addSpark(e.clientX, e.clientY);
+      else { const t = e.touches[0]; if (t) addSpark(t.clientX, t.clientY); }
+    }, {passive:true}));
+
     // Initial helpful logs
     setTimeout(()=>{
-      toggleTerminal();
-      logTerminal('Welcome to the Ayesha Terminal  ', 'ok');
+      logTerminal('Welcome to the Ayesha Terminal ✨', 'ok');
       COMMANDS.help();
-    }, 1200);
+    }, 600);
   </script>
 </body>
 </html>
